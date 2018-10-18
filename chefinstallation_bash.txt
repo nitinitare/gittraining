@@ -1,0 +1,24 @@
+#!/bin/bash
+yum install wget -y
+yum install git -y
+#local_path="/root/chef_repository/chef/chef_repo"
+git clone https://github.com/mujahid45/chef_repo.git
+rpm -qa | grep -i chef > /dev/null
+if [ echo$? != 0 ]
+    then
+                echo "chef is not installed, installing it "
+        rpm -Uvh https://packages.chef.io/files/stable/chefdk/2.4.17/el/7/chefdk-2.4.17-1.el7.x86_64.rpm
+        curl -L https://www.opscode.com/chef/install.sh | bash
+fi
+wget http://github.com/opscode/chef-repo/tarball/master
+tar zxvf master
+mv /root/chef-boneyard-*/ /root/chef_repo
+mkdir /root/chef_repo/.chef/
+echo "cookbook_path [ '/root/chef_repo/cookbooks' ]"  > /root/chef_repo/.chef/knife.rb
+echo 'cookbook_path "/root/chef_repo/cookbooks"' > /root/chef_repo/solo.rb
+echo '{
+        "run_list": ["recipe[ntp]" ]
+}' > /root/chef_repo/web.json
+chef generate cookbook /root/chef_repo/cookbooks/ntp
+echo "Running of cookbooks"
+chef-solo -c /root/chef_repo/solo.rb -j /root/chef_repo/web.json
